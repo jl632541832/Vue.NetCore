@@ -2,7 +2,7 @@
   <Form
     ref="formValidate"
     :style="{width:width>0?(width+'px'):'100%'}"
-    :model="formFileds"
+    :model="_formFields"
     :label-width="labelWidth"
   >
     <!-- :rules="ruleValidate" -->
@@ -13,15 +13,15 @@
         <form-expand v-if="item.render&&typeof item.render=='function'" :render="item.render"></form-expand>
         <FormItem
           v-else
-          :rules="getRule(item,formFileds)"
+          :rules="getRule(item,_formFields)"
           :label="item.title?(item.title+'：'):''"
           :prop="item.field"
         >
-          <template v-if="isReadonlyImgFile(item,formFileds)">
+          <template v-if="isReadonlyImgFile(item,_formFields)">
             <div v-if="item.type=='img'||item.columnType=='img'" class="form-imgs">
               <div
                 class="img-item"
-                v-for="(img,imgIndex) in formFileds[item.field]"
+                v-for="(img,imgIndex) in _formFields[item.field]"
                 :key="imgIndex"
               >
                 <img :src="getSrc(img.path)" :onerror="errorImg" @click="previewImg(img.path)" />
@@ -30,165 +30,161 @@
             <template v-else>
               <div
                 class="form-file-list"
-                v-for="(file,fileIndex) in formFileds[item.field]"
+                v-for="(file,fileIndex) in _formFields[item.field]"
                 :key="fileIndex"
               >
-                <a @click="dowloadFile(formFileds[item.field][fileIndex])">{{file.name}}</a>
+                <a @click="dowloadFile(_formFields[item.field][fileIndex])">{{file.name}}</a>
               </div>
             </template>
           </template>
           <label
             v-else-if="item.disabled||item.readonly"
             class="readonly-input"
-          >{{getText(formFileds,item)}}</label>
+          >{{getText(_formFields,item)}}</label>
           <div v-else :class="{'form-item-extra':item.extra}">
-            <div>
-              <!--下拉框绑定时如果key为数字，请将key+''转换为字符串-->
-              <div
-                v-if="item.type=='select'||item.type=='selectList'||item.type=='drop'||item.type=='dropList'"
-              >
-                <!--select绑定默认值时，如果设置了默认值，数据源也有数据，但没绑定上，问题在于key与默认值类型不一致，如:默认值是字符串，数据源的key是数字，类型不至会导致绑定失败-->
-                <template>
-                  <!-- {{ item.remote||item.url?"1":"0"}} -->
-                  <!-- 远程搜索 -->
-                  <!-- 从后台字典搜索remote  -->
-                  <Select
-                    v-if="item.remote||item.url"
+            <!--下拉框绑定时如果key为数字，请将key+''转换为字符串-->
+            <template
+              v-if="item.type=='select'||item.type=='selectList'||item.type=='drop'||item.type=='dropList'"
+            >
+              <!--select绑定默认值时，如果设置了默认值，数据源也有数据，但没绑定上，问题在于key与默认值类型不一致，如:默认值是字符串，数据源的key是数字，类型不至会导致绑定失败-->
+              <template>
+                <!-- {{ item.remote||item.url?"1":"0"}} -->
+                <!-- 远程搜索 -->
+                <!-- 从后台字典搜索remote  -->
+                <Select
+                  v-if="item.remote||item.url"
+                  :transfer="true"
+                  v-model="_formFields[item.field]"
+                  filterable
+                  remote
+                  @on-clear="()=>{onClear(item,_formFields)}"
+                  :remote-method="(val)=>{remoteSearch(item,_formFields,val)}"
+                  :loading="item.loading"
+                  :placeholder="item.placeholder?item.placeholder:( '请选择'+item.title)"
+                  @on-change="onRemoteChange(item,_formFields[item.field])"
+                  clearable
+                >
+                  <Option
+                    v-for="(kv,kvIndex) in getData(item)"
+                    :key="kvIndex"
+                    :value="kv.key"
+                  >{{kv.value}}</Option>
+                </Select>
+                <Select
+                  v-else
+                  :transfer="true"
+                  v-model="_formFields[item.field]"
+                  :multiple="(item.type=='select'||item.type=='drop')?false:true"
+                  :filterable="(item.filter||item.data.length>10)?true:false"
+                  :placeholder="item.placeholder?item.placeholder:( '请选择'+item.title)"
+                  @on-change="onChange(item,_formFields[item.field])"
+                  clearable
+                >
+                  <Option
+                    v-for="(kv,kvIndex) in item.data"
+                    :key="kvIndex"
+                    :value="kv.key"
+                  >{{kv.value}}</Option>
+                </Select>
+              </template>
+            </template>
+            <i-switch
+              v-else-if="item.type=='switch'"
+              :true-value="typeof _formFields[item.field]=='boolean' ? true:1"
+              :false-value="typeof _formFields[item.field]=='boolean' ? false:0"
+              v-model="_formFields[item.field]"
+            >
+              <span slot="open">是</span>
+              <span slot="close">否</span>
+            </i-switch>
+            <Row v-else-if="item.type=='date'||item.type=='datetime'||item.columnType=='datetime'">
+              <Col span="24">
+                <FormItem :prop="item.field">
+                  <DatePicker
                     :transfer="true"
-                    v-model="formFileds[item.field]"
-                    filterable
-                    remote
-                    @on-clear="()=>{onClear(item,formFileds)}"
-                    :remote-method="(val)=>{remoteSearch(item,formFileds,val)}"
-                    :loading="item.loading"
-                    :placeholder="item.placeholder?item.placeholder:( '请选择'+item.title)"
-                    @on-change="onRemoteChange(item,formFileds[item.field])"
-                    clearable
-                  >
-                    <Option
-                      v-for="(kv,kvIndex) in getData(item)"
-                      :key="kvIndex"
-                      :value="kv.key"
-                    >{{kv.value}}</Option>
-                  </Select>
-                  <Select
-                    v-else
-                    :transfer="true"
-                    v-model="formFileds[item.field]"
-                    :multiple="(item.type=='select'||item.type=='drop')?false:true"
-                    :filterable="(item.filter||item.data.length>10)?true:false"
-                    :placeholder="item.placeholder?item.placeholder:( '请选择'+item.title)"
-                    @on-change="onChange(item,formFileds[item.field])"
-                    clearable
-                  >
-                    <Option
-                      v-for="(kv,kvIndex) in item.data"
-                      :key="kvIndex"
-                      :value="kv.key"
-                    >{{kv.value}}</Option>
-                  </Select>
-                </template>
-              </div>
-              <i-switch
-                v-else-if="item.type=='switch'"
-                :true-value="typeof formFileds[item.field]=='boolean' ? true:1"
-                :false-value="typeof formFileds[item.field]=='boolean' ? false:0"
-                v-model="formFileds[item.field]"
-              >
-                <span slot="open">是</span>
-                <span slot="close">否</span>
-              </i-switch>
-              <Row
-                v-else-if="item.type=='date'||item.type=='datetime'||item.columnType=='datetime'"
-              >
-                <Col span="24">
-                  <FormItem :prop="item.field">
-                    <DatePicker
-                      :transfer="true"
-                      :type="item.range?(item.type+'range'):item.type"
-                      :format="item.type=='date'? 'yyyy-MM-dd':'yyyy-MM-dd HH:mm:ss'"
-                      :placeholder="item.placeholder||item.title"
-                      :value="formFileds[item.field]"
-                      @on-change="(time)=>{formFileds[item.field]=time; validateField(item); return time}"
-                    ></DatePicker>
-                  </FormItem>
-                </Col>
-              </Row>
-              <CheckboxGroup
-                @on-change="(arr)=>{item.onChange&&item.onChange(arr)}"
-                v-else-if="item.type=='checkbox'"
-                v-model="formFileds[item.field]"
-              >
-                <Checkbox
-                  v-for="(kv,kvIndex) in item.data"
-                  :key="kvIndex"
-                  :label="kv.key"
-                >{{kv.value}}</Checkbox>
-              </CheckboxGroup>
-              <vol-upload
-                v-else-if="isFile(item,formFileds)"
-                :desc="item.desc"
-                :multiple="item.multiple"
-                :max-file="item.maxFile"
-                :max-size="item.maxSize"
-                :autoUpload="item.autoUpload"
-                :fileInfo="formFileds[item.field]"
-                :url="item.url"
-                :img="item.type=='img'||item.columnType=='img'"
-                :excel="item.type=='excel'"
-                :fileTypes="item.fileTypes?item.fileTypes:[]"
-                :upload-before="item.uploadBefore"
-                :upload-after="item.uploadAfter"
-                :append="item.append?true:false"
-                :on-change="item.onChange"
-                :file-click="item.fileClick"
-                :remove-before="item.removeBefore"
-                :down-load="item.downLoad?true:false"
-              ></vol-upload>
-              <!-- 2020.05.31增加iview组件Cascader -->
-              <Cascader
-                v-else-if="item.type=='cascader'"
-                :load-data="item.loadData"
-                :data="item.data"
-                filterable
-                :render-format="item.formatter"
-                v-model="formFileds[item.field]"
-              ></Cascader>
-
-              <Input
-                v-else-if="item.type=='textarea'"
-                v-model="formFileds[item.field]"
-                type="textarea"
-                @on-keypress="($event)=>{item.onKeyPress&&item.onKeyPress($event)}"
-                clearable
-                :autosize="{minRows:2,maxRows:item.maxRows||10}"
-                :placeholder="item.placeholder?item.placeholder:( '请输入'+item.title)"
-                :ref="item.field"
-              ></Input>
-              <Input
-                clearable
-                v-else-if="item.type=='password'"
-                type="password"
-                autocomplete="off"
-                v-model.number="formFileds[item.field]"
-                @on-keypress="($event)=>{item.onKeyPress&&item.onKeyPress($event)}"
-                :placeholder="item.placeholder?item.placeholder:( '请输入'+item.title)"
-                :ref="item.field"
-              ></Input>
-              <Input
-                clearable
-                v-else
-                @on-keypress="($event)=>{item.onKeyPress&&item.onKeyPress($event)}"
-                v-model="formFileds[item.field]"
-                :placeholder="item.placeholder?item.placeholder:( '请输入'+item.title)"
-                :ref="item.field"
-              ></Input>
-            </div>
+                    :type="item.range?(item.type+'range'):item.type"
+                    :format="item.type=='date'? 'yyyy-MM-dd':'yyyy-MM-dd HH:mm:ss'"
+                    :placeholder="item.placeholder||item.title"
+                    :value="_formFields[item.field]"
+                    @on-change="(time)=>{_formFields[item.field]=time; validateField(item); return time}"
+                  ></DatePicker>
+                </FormItem>
+              </Col>
+            </Row>
+            <CheckboxGroup
+              @on-change="(arr)=>{item.onChange&&item.onChange(arr)}"
+              v-else-if="item.type=='checkbox'"
+              v-model="_formFields[item.field]"
+            >
+              <Checkbox
+                v-for="(kv,kvIndex) in item.data"
+                :key="kvIndex"
+                :label="kv.key"
+              >{{kv.value}}</Checkbox>
+            </CheckboxGroup>
+            <vol-upload
+              v-else-if="isFile(item,_formFields)"
+              :desc="item.desc"
+              :multiple="item.multiple"
+              :max-file="item.maxFile"
+              :max-size="item.maxSize"
+              :autoUpload="item.autoUpload"
+              :fileInfo="_formFields[item.field]"
+              :url="item.url"
+              :img="item.type=='img'||item.columnType=='img'"
+              :excel="item.type=='excel'"
+              :fileTypes="item.fileTypes?item.fileTypes:[]"
+              :upload-before="item.uploadBefore"
+              :upload-after="item.uploadAfter"
+              :append="item.append?true:false"
+              :on-change="item.onChange"
+              :file-click="item.fileClick"
+              :remove-before="item.removeBefore"
+              :down-load="item.downLoad?true:false"
+            ></vol-upload>
+            <!-- 2020.05.31增加iview组件Cascader -->
+            <Cascader
+              v-else-if="item.type=='cascader'"
+              :load-data="item.loadData"
+              :data="item.data"
+              filterable
+              :render-format="item.formatter"
+              v-model="_formFields[item.field]"
+            ></Cascader>
+            <!--2020.09.05增加textarea标签的最小高度item.minRows属性 -->
+            <Input
+              v-else-if="item.type=='textarea'"
+              v-model="_formFields[item.field]"
+              type="textarea"
+              @on-keypress="($event)=>{item.onKeyPress&&item.onKeyPress($event)}"
+              clearable
+              :autosize="{minRows:item.minRows||2,maxRows:item.maxRows||10}"
+              :placeholder="item.placeholder?item.placeholder:( '请输入'+item.title)"
+              :ref="item.field"
+            />
+            <Input
+              clearable
+              v-else-if="item.type=='password'"
+              type="password"
+              autocomplete="off"
+              v-model.number="_formFields[item.field]"
+              @on-keypress="($event)=>{item.onKeyPress&&item.onKeyPress($event)}"
+              :placeholder="item.placeholder?item.placeholder:( '请输入'+item.title)"
+              :ref="item.field"
+            />
+            <Input
+              clearable
+              v-else
+              @on-keypress="($event)=>{item.onKeyPress&&item.onKeyPress($event)}"
+              v-model="_formFields[item.field]"
+              :placeholder="item.placeholder?item.placeholder:( '请输入'+item.title)"
+              :ref="item.field"
+            />
 
             <div class="form-extra" v-if="item.extra">
               <a
                 :style="item.extra.style"
-                @click="()=>{item.extra.click&&item.extra.click(item,formFileds[item.field])}"
+                @click="()=>{item.extra.click&&item.extra.click(item,_formFields[item.field])}"
               >
                 <Icon v-if="item.extra.icon" :type="item.extra.icon" />
                 {{item.extra.text}}
@@ -207,41 +203,56 @@ import FormExpand from "./VolForm/VolFormRender";
 export default {
   components: {
     FormExpand,
-    VolUpload: () => import("@/components/basic/VolUpload.vue")
+    VolUpload: () => import("@/components/basic/VolUpload.vue"),
   },
   props: {
     loadKey: {
       //是否加载formRules字段配置的数据源
       type: Boolean,
-      default: false
+      default: false,
     },
     width: {
       //表单宽度
       type: Number,
-      default: 0
+      default: 0,
     },
     labelWidth: {
       //表单左边label文字标签的宽度
       type: Number,
-      default: 100
+      default: 100,
     },
     formRules: {
       //表单配置规则，如字段类型，是否必填
       type: Array,
-      default: []
+      default: [],
     },
     formFileds: {
       //表单字段
       type: Object,
-      default: {}
-    }
+      default: () => {
+        return {};
+      },
+    },
+    formFields: {
+      //2020.09.13增加formFileds拼写错误兼容处理
+      //表单字段
+      type: Object,
+      default: () => {
+        return {};
+      },
+    },
   },
   watch: {},
   created() {
+    //2020.09.13增加formFileds拼写错误兼容处理
+    this._formFields = Object.keys(this.formFields).length
+      ? this.formFields
+      : this.formFileds;
     this.initFormRules(true);
   },
   data() {
     return {
+      _formFields: {},
       remoteCall: true,
       errorImg: 'this.src="' + require("@/assets/imgs/error-img.png") + '"',
       rule: {
@@ -252,11 +263,11 @@ export default {
           "datetime",
           "drop",
           "radio",
-          "cascader"
+          "cascader",
         ], //2020.05.31增加级联类型
         phone: /^[1][3,4,5,6,7,8,9][0-9]{9}$/,
         decimal: /(^[\-0-9][0-9]*(.[0-9]+)?)$/,
-        number: /(^[\-0-9][0-9]*([0-9]+)?)$/
+        number: /(^[\-0-9][0-9]*([0-9]+)?)$/,
       },
       inputTypeArr: ["text", "string", "mail", "textarea", "password"],
       types: {
@@ -267,10 +278,10 @@ export default {
         bool: "boolean",
         date: "datetime",
         date: "date",
-        mail: "email"
+        mail: "email",
       },
       span: 0,
-      ruleValidate: {}
+      ruleValidate: {},
     };
   },
   methods: {
@@ -285,32 +296,32 @@ export default {
       return path;
     },
     //是否为图片文件等格式并对字段的转换成数组：[{name:'1.jpg',path:'127.0.0.1/ff/1.jpg'}]
-    isFile(item, formFileds) {
+    isFile(item, _formFields) {
       if (
         item.type == "img" ||
         item.columnType == "img" ||
         item.type == "excel" ||
         item.type == "file"
       ) {
-        this.convertFileToArray(item, formFileds);
+        this.convertFileToArray(item, _formFields);
         return true;
       }
       return false;
     },
-    isReadonlyImgFile(item, formFileds) {
-      if ((item.disabled || item.readonly) && this.isFile(item, formFileds)) {
+    isReadonlyImgFile(item, _formFields) {
+      if ((item.disabled || item.readonly) && this.isFile(item, _formFields)) {
         return true;
       }
       return false;
     },
-    convertFileToArray(item, formFileds) {
+    convertFileToArray(item, _formFields) {
       if (!item.maxFile) {
         item.maxFile = 1; //默认只能上传一个文件，可以在onInit中设置
       }
 
-      let fileInfo = formFileds[item.field];
+      let fileInfo = _formFields[item.field];
       if (fileInfo instanceof Array) {
-        fileInfo.forEach(x => {
+        fileInfo.forEach((x) => {
           if (x.hasOwnProperty("path")) {
             if (x.path && !this.base.isUrl(x.path)) {
               //这里修改后死循环?
@@ -321,25 +332,25 @@ export default {
         return;
       }
       if (fileInfo === null || fileInfo === undefined) {
-        formFileds[item.field] = [];
+        _formFields[item.field] = [];
         return;
       }
       //将以逗号隔开的文件分割成数组127.0.0.1/aa/1.jpg,将127.0.0.1/aa/2.jpg
       if (typeof fileInfo == "string") {
         if (fileInfo.trim() === "") {
-          formFileds[item.field] = [];
+          _formFields[item.field] = [];
           return;
         }
         //如果文件路径是字符串，则使用，拆分
         fileInfo = fileInfo.replace(/\\/g, "/");
         let files = fileInfo.split(",");
-        formFileds[item.field] = [];
+        _formFields[item.field] = [];
         for (let index = 0; index < files.length; index++) {
           let file = files[index];
           let splitFile = file.split("/");
-          formFileds[item.field].push({
+          _formFields[item.field].push({
             name: splitFile.length > 0 ? splitFile[splitFile.length - 1] : file,
-            path: file //this.base.isUrl(file) ? file : this.http.ipAddress + file,
+            path: file, //this.base.isUrl(file) ? file : this.http.ipAddress + file,
           });
         }
       }
@@ -349,7 +360,7 @@ export default {
         file.path,
         file.name,
         {
-          Authorization: this.$store.getters.getToken()
+          Authorization: this.$store.getters.getToken(),
         },
         this.http.ipAddress
       );
@@ -372,12 +383,12 @@ export default {
       }
       callback();
     },
-    getText(formFileds, item) {
+    getText(_formFields, item) {
       //2019.10.24修复表单select组件为只读的属性时没有绑定数据源
-      let text = formFileds[item.field];
+      let text = _formFields[item.field];
 
       if (typeof text == "function") {
-        return text(formFileds);
+        return text(_formFields);
       }
       if (
         text === "null" ||
@@ -395,14 +406,14 @@ export default {
       // } else {
       //   data = item.data;
       // }
-      data.forEach(x => {
+      data.forEach((x) => {
         if (x.key == text) {
           text = x.value;
         }
       });
       return text;
     },
-    onClear(item, formFileds) {
+    onClear(item, _formFields) {
       //远程select标签清空选项
       item.data.splice(0);
       // console.log(2);
@@ -415,7 +426,7 @@ export default {
     onRemoteChange(item, value) {
       //第二次打开时，默认值成了undefined，待查viewgrid中重置代码
       if (value == undefined && item.data.length > 0) {
-        this.formFileds[item.field] = item.data[0].key;
+        this._formFields[item.field] = item.data[0].key;
         //  console.log('undefined');
       }
       this.remoteCall = false;
@@ -430,8 +441,8 @@ export default {
       let keys = [],
         binds = [];
       //初始化字典数据源
-      this.formRules.forEach(item => {
-        item.forEach(x => {
+      this.formRules.forEach((item) => {
+        item.forEach((x) => {
           if (x.dataKey && (!x.data || x.data.length == 0) && !x.remote) {
             // if (!x.data)
             x.data = [];
@@ -445,12 +456,14 @@ export default {
 
       if (keys.length == 0) return;
 
-      this.http.post("/api/Sys_Dictionary/GetVueDictionary", keys).then(dic => {
-        this.bindOptions(dic, binds);
-      });
+      this.http
+        .post("/api/Sys_Dictionary/GetVueDictionary", keys)
+        .then((dic) => {
+          this.bindOptions(dic, binds);
+        });
     },
     //远程搜索(打开弹出框时应该禁止搜索)
-    remoteSearch(item, formFileds, val) {
+    remoteSearch(item, _formFields, val) {
       if (
         val == "" ||
         (item.data.length == 1 &&
@@ -463,15 +476,15 @@ export default {
         : item.url;
       this.http
         .post(url + "?dicNo=" + item.dataKey + "&value=" + val)
-        .then(dicData => {
+        .then((dicData) => {
           this.$set(item, "loading", false);
           item.data = dicData;
           this.formRules[item.point.x].splice(item.point.y, 1, item);
         });
     },
     bindOptions(dic, binds) {
-      dic.forEach(d => {
-        binds.forEach(x => {
+      dic.forEach((d) => {
+        binds.forEach((x) => {
           if (x.key != d.dicNo) return true;
           //如果有数据的则不查询
           if (x.data.length > 0) return true;
@@ -481,7 +494,7 @@ export default {
             for (let index = 0; index < source.length; index++) {
               newSource[index] = {
                 key: source["key"] + "",
-                value: source["value"]
+                value: source["value"],
               };
             }
             x.data.push(...newSource);
@@ -510,24 +523,23 @@ export default {
       //  this.remoteCall = false;
       this.$refs["formValidate"].resetFields();
       if (!sourceObj) return;
-      for (const key in this.formFileds) {
+      for (const key in this._formFields) {
         if (sourceObj.hasOwnProperty(key)) {
-          this.formFileds[key] = sourceObj[key];
+          this._formFields[key] = sourceObj[key];
         }
       }
       //  this.remoteCall = true;
     },
     validate(callback) {
       let result = true;
-      this.$refs["formValidate"]
-        .validate(valid => {
-          if (!valid) {
-            this.$Message.error("数据验证未通过!");
-            result = false;
-          } else if (typeof callback == "function") {
-            callback(valid);
-          }
-        })
+      this.$refs["formValidate"].validate((valid) => {
+        if (!valid) {
+          this.$Message.error("数据验证未通过!");
+          result = false;
+        } else if (typeof callback == "function") {
+          callback(valid);
+        }
+      });
       return result;
     },
     getReuired(rule, item) {},
@@ -560,7 +572,7 @@ export default {
           };
         }
         if (!item.onChange) {
-          item.onChange = files => {
+          item.onChange = (files) => {
             return true;
           };
         }
@@ -571,7 +583,7 @@ export default {
         }
         if (!item.uploadBefore) {
           //  console.log("111");
-          item.uploadBefore = files => {
+          item.uploadBefore = (files) => {
             return true;
           };
         }
@@ -605,7 +617,7 @@ export default {
         });
       });
     },
-    getRule(item, formFileds) {
+    getRule(item, _formFields) {
       //用户设置的自定义方法
       if (item.validator && typeof item.validator == "function") {
         return {
@@ -616,7 +628,8 @@ export default {
             return callback();
           },
           required: item.required,
-          trigger: this.rule.change.indexOf(item.type) != -1 ? "change" : "blur"
+          trigger:
+            this.rule.change.indexOf(item.type) != -1 ? "change" : "blur",
         };
       }
 
@@ -648,7 +661,7 @@ export default {
             if (!rule.min && !rule.max) {
               if (rule.required) {
                 if (value == "") {
-                  formFileds[rule.field] = 0;
+                  _formFields[rule.field] = 0;
                   return callback();
                 }
               }
@@ -682,7 +695,7 @@ export default {
               return callback(new Error(rule.message));
             }
             return callback();
-          }
+          },
         };
       }
 
@@ -691,7 +704,7 @@ export default {
         return {
           validator: this.validatorPhone,
           required: item.required,
-          trigger: "blur"
+          trigger: "blur",
         };
       }
 
@@ -699,13 +712,13 @@ export default {
         return {
           validator: this.validatorPwd,
           required: item.required,
-          trigger: "blur"
+          trigger: "blur",
         };
       }
 
       if (!item.required && item.type != "mail") {
         return {
-          required: false
+          required: false,
         };
       }
 
@@ -727,7 +740,7 @@ export default {
           required: true,
           message: message,
           trigger: "blur",
-          type: type
+          type: type,
         };
         if (item.type == "mail") {
           _rule.required = item.required;
@@ -736,8 +749,8 @@ export default {
             {
               type: type,
               message: message,
-              trigger: "blur"
-            }
+              trigger: "blur",
+            },
           ];
         }
         if (item.min) {
@@ -751,8 +764,8 @@ export default {
               max: item.max,
               required: true,
               message: item.title + "最多" + item.max + "个字符!",
-              trigger: "blur"
-            }
+              trigger: "blur",
+            },
           ];
         }
         return _rule;
@@ -763,7 +776,7 @@ export default {
           required: item.required,
           message: "请选择" + item.title,
           trigger: "change",
-          type: "string"
+          type: "string",
         };
       }
       if (item.type == "date" || item.type == "datetime") {
@@ -782,7 +795,7 @@ export default {
             console.log(val);
             // if (message) return callback(new Error(message + ""));
             return callback();
-          }
+          },
         };
       }
 
@@ -806,7 +819,7 @@ export default {
               return callback(new Error(rule.message));
             }
             return callback();
-          }
+          },
         };
 
         //    validator: this.validatorPhone,
@@ -817,12 +830,12 @@ export default {
             message: "最多只能选择" + item.max + "项" + item.title,
             max: item.max,
             type: "array",
-            trigger: "change"
-          }
+            trigger: "change",
+          },
         ];
       }
       return {
-        required: false
+        required: false,
       };
     },
     getCheckBoxModel(arr) {
@@ -833,17 +846,17 @@ export default {
     validateField(item, callback) {
       //2020.07.17增加对日期onchange时校验
       let fields = this.$refs.formValidate.fields;
-      fields.forEach(field => {
+      fields.forEach((field) => {
         if (field.prop == item.field) {
-          field.validate("", error => {
+          field.validate("", (error) => {
             console.log(error);
           });
         }
       });
-       //2020.07.24增加日期onChange事件
-      item.onChange&&item.onChange(this.formFileds[item.field])
-    }
-  }
+      //2020.07.24增加日期onChange事件
+      item.onChange && item.onChange(this._formFields[item.field]);
+    },
+  },
 };
 </script>
 <style>
