@@ -5,24 +5,38 @@
       <div class="message" v-show="loading">加载中.....</div>
       <el-table
         :show-summary="summary"
-        :summary-method="(columns,row)=>{return this.summaryData;}"
+        :summary-method="
+          (columns, row) => {
+            return this.summaryData;
+          }
+        "
         @selection-change="selectionChange"
         @row-click="rowClick"
-        @cell-mouse-leave="rowEndEdit"
+        @header-click="headerClick"
+        @cell-mouse-leave="
+          (row, column, cell) => {
+            !this.clickEdit && this.rowEndEdit(row, column, cell);
+          }
+        "
         ref="table"
         class="v-table"
         @sort-change="sortChange"
         tooltip-effect="dark"
         :height="realHeight"
         :max-height="realMaxHeight"
-        :data="url?rowData:tableData"
+        :data="url ? rowData : tableData"
         border
         :row-class-name="initIndex"
         style="width: 100%"
       >
-        <el-table-column v-if="ck" type="selection" width="55"></el-table-column>
         <el-table-column
-          v-for="(column,cindex) in filterColumns()"
+          v-if="ck"
+          type="selection"
+          width="55"
+        ></el-table-column>
+        <!-- 2020.10.10移除table第一行强制排序 -->
+        <el-table-column
+          v-for="(column, cindex) in filterColumns()"
           :key="cindex"
           :prop="column.field"
           :label="column.title"
@@ -30,12 +44,12 @@
           :formatter="formatter"
           :fixed="column.fixed"
           :align="column.align"
-          :sortable="column.sort||cindex==0?'custom':false"
+          :sortable="column.sort ? 'custom' : false"
         >
           <template slot-scope="scope">
             <!-- 2020.06.18增加render渲染自定义内容 -->
             <table-render
-              v-if="column.render&&typeof column.render=='function'"
+              v-if="column.render && typeof column.render == 'function'"
               :row="scope.row"
               :index="scope.$index"
               :column="column"
@@ -44,24 +58,54 @@
             <!-- 启用双击编辑功能，带编辑功能的不会渲染下拉框文本背景颜色 -->
             <!-- @click="rowBeginEdit(scope.$index,cindex)" -->
             <div v-else-if="column.edit" class="edit-el">
-              <div v-if="column.edit.keep|| edit.rowIndex==scope.$index" class="e-item">
+              <div
+                v-if="column.edit.keep || edit.rowIndex == scope.$index"
+                class="e-item"
+              >
                 <div>
                   <!-- 2020.07.24增加日期onChange事件 -->
                   <DatePicker
                     :transfer="true"
-                    v-if="column.edit.type=='date'||column.edit.type=='datetime'"
+                    v-if="
+                      column.edit.type == 'date' ||
+                      column.edit.type == 'datetime'
+                    "
                     :type="column.edit.type"
-                    :format="column.edit.type=='date'? 'yyyy-MM-dd':'yyyy-MM-dd HH:mm:ss'"
+                    :format="
+                      column.edit.type == 'date'
+                        ? 'yyyy-MM-dd'
+                        : 'yyyy-MM-dd HH:mm:ss'
+                    "
                     :placeholder="column.title"
                     :value="scope.row[column.field]"
-                    @on-change="(time)=>{scope.row[column.field]=time; column.onChange&&column.onChange(time,column); return time}"
+                    @on-change="
+                      (time) => {
+                        scope.row[column.field] = time;
+                        column.onChange && column.onChange(time, column);
+                        return time;
+                      }
+                    "
                   ></DatePicker>
                   <i-switch
-                    v-else-if="column.edit.type=='switch'"
-                    :true-value="typeof scope.row[column.field]=='boolean' ? true:1"
-                    :false-value="typeof scope.row[column.field]=='boolean' ? false:0"
+                    v-else-if="column.edit.type == 'switch'"
+                    :true-value="
+                      typeof scope.row[column.field] == 'boolean' ? true : 1
+                    "
+                    :false-value="
+                      typeof scope.row[column.field] == 'boolean' ? false : 0
+                    "
                     v-model="scope.row[column.field]"
-                    @on-change="(value)=>{column.onChange&&column.onChange(column,scope.row,url?rowData:tableData,value);}"
+                    @on-change="
+                      (value) => {
+                        column.onChange &&
+                          column.onChange(
+                            column,
+                            scope.row,
+                            url ? rowData : tableData,
+                            value
+                          );
+                      }
+                    "
                   >
                     <span slot="open">是</span>
                     <span slot="close">否</span>
@@ -71,95 +115,151 @@
                   -->
                   <Select
                     :transfer="true"
-                    v-else-if="column.edit.type=='select'"
+                    v-else-if="column.edit.type == 'select'"
                     v-model="scope.row[column.field]"
-                    :filterable="(column.filter||getSelectedOptions(column).length>10)?true:false"
-                    :placeholder="'请选择'+column.title"
-                    @on-change="column.onChange&&column.onChange(column,scope.row,url?rowData:tableData)"
+                    :filterable="
+                      column.filter || getSelectedOptions(column).length > 10
+                        ? true
+                        : false
+                    "
+                    :placeholder="'请选择' + column.title"
+                    @on-change="
+                      column.onChange &&
+                        column.onChange(
+                          column,
+                          scope.row,
+                          url ? rowData : tableData
+                        )
+                    "
                     clearable
                   >
                     <Option
-                      v-for="(kv,kvIndex) in getSelectedOptions(column)"
+                      v-for="(kv, kvIndex) in getSelectedOptions(column)"
                       :key="kvIndex"
-                      :value="kv.key===undefined?'':kv.key"
-                    >{{kv.value}}</Option>
+                      :value="kv.key === undefined ? '' : kv.key"
+                      >{{ kv.value }}</Option
+                    >
                   </Select>
                   <Input
                     v-else
                     clearable
-                    @on-change="(event)=>{onChange	(scope,scope.row[column.field],event,column);}"
+                    @on-change="
+                      (event) => {
+                        onChange(scope, scope.row[column.field], event, column);
+                      }
+                    "
                     v-model="scope.row[column.field]"
-                    :placeholder="'请输入'+column.title"
+                    :placeholder="'请输入' + column.title"
                   ></Input>
                 </div>
-                <div class="extra" v-if="column.extra&&edit.rowIndex==scope.$index">
+                <div
+                  class="extra"
+                  v-if="column.extra && edit.rowIndex == scope.$index"
+                >
                   <a
                     :style="column.extra.style"
-                    @click="()=>{column.extra.click&&column.extra.click(column,scope.row,url?rowData:tableData)}"
+                    @click="
+                      () => {
+                        column.extra.click &&
+                          column.extra.click(
+                            column,
+                            scope.row,
+                            url ? rowData : tableData
+                          );
+                      }
+                    "
                   >
                     <Icon v-if="column.extra.icon" :type="column.extra.icon" />
-                    {{column.extra.text}}
+                    {{ column.extra.text }}
                   </a>
                 </div>
               </div>
               <template v-else>
-                <div v-if="column.formatter" v-html="column.formatter(scope.row,column)"></div>
-                <div v-else>{{formatter(scope.row,column,true)}}</div>
+                <div
+                  v-if="column.formatter"
+                  v-html="column.formatter(scope.row, column)"
+                ></div>
+                <div v-else>{{ formatter(scope.row, column, true) }}</div>
               </template>
             </div>
             <!--没有编辑功能的直接渲染标签-->
             <div v-else>
               <a
                 href="javascript:void(0)"
-                @click="link(scope.row,column)"
+                @click="link(scope.row, column)"
                 v-if="column.link"
                 v-text="scope.row[column.field]"
               ></a>
               <img
-                v-else-if="column.type=='img'"
-                v-for="(file,vIndex ) in  getFilePath(scope.row[column.field])"
+                v-else-if="column.type == 'img'"
+                v-for="(file, vIndex) in getFilePath(scope.row[column.field])"
                 :key="vIndex"
                 :onerror="defaultImg"
-                @click="viewImg(scope.row,column,file.path)"
+                @click="viewImg(scope.row, column, file.path)"
                 class="table-img"
                 :src="file.path"
               />
               <a
-                style="margin-right: 15px;"
-                v-else-if="column.type=='file'||column.type=='excel'"
+                style="margin-right: 15px"
+                v-else-if="column.type == 'file' || column.type == 'excel'"
                 class="t-file"
-                v-for="(file,vIndex ) in  getFilePath(scope.row[column.field])"
+                v-for="(file, vIndex) in getFilePath(scope.row[column.field])"
                 :key="vIndex"
                 @click="dowloadFile(file)"
-              >{{file.name}}</a>
-              <Tag v-else-if="column.type=='date'">{{formatterDate(scope.row,column)}}</Tag>
+                >{{ file.name }}</a
+              >
+              <Tag v-else-if="column.type == 'date'">{{
+                formatterDate(scope.row, column)
+              }}</Tag>
               <div
                 v-else-if="column.formatter"
-                @click="formatterClick(scope.row,column)"
-                v-html="column.formatter(scope.row,column)"
+                @click="formatterClick(scope.row, column)"
+                v-html="column.formatter(scope.row, column)"
               ></div>
-               <!--2020.09.06增加table有数据源的列，可以移除或自定义显示背景颜色及点击事件-->
+              <!--2020.09.06增加table有数据源的列，可以移除或自定义显示背景颜色及点击事件-->
               <div
-                v-else-if="(column.bind&&column.normal)"
-                @click="formatterClick(scope.row,column)"
-                :style="column.getStyle&&column.getStyle(scope.row,column)"
-              >{{formatter(scope.row,column,true)}}</div>
+                v-else-if="column.bind && column.normal"
+                @click="formatterClick(scope.row, column)"
+                :style="column.getStyle && column.getStyle(scope.row, column)"
+              >
+                {{ formatter(scope.row, column, true) }}
+              </div>
               <div
                 v-else-if="column.click"
-                @click="formatterClick(scope.row,column)"
-              >{{scope.row[column.field]}}</div>
+                @click="formatterClick(scope.row, column)"
+              >
+                {{ scope.row[column.field] }}
+              </div>
               <Tag
-                v-else-if="(column.bind)"
-                :color="getColor(scope.row,column)"
-              >{{formatter(scope.row,column,true)}}</Tag>
-              <div v-else>{{formatter(scope.row,column,true)}}</div>
+                v-else-if="column.bind"
+                :color="getColor(scope.row, column)"
+                >{{ formatter(scope.row, column, true) }}</Tag
+              >
+              <div v-else>{{ formatter(scope.row, column, true) }}</div>
             </div>
           </template>
         </el-table-column>
-        <el-table-column v-if="!doubleEdit" :min-width="100" label="操作" fixed="right">
+        <el-table-column
+          v-if="!doubleEdit"
+          :min-width="100"
+          label="操作"
+          fixed="right"
+        >
           <template slot-scope="scope">
-            <Button type="info" size="small" @click="beginWithButtonEdit(scope)" ghost>编辑</Button>
-            <Button type="info" size="small" @click="endWithButtonEdit(scope)" ghost>完成</Button>
+            <Button
+              type="info"
+              size="small"
+              @click="beginWithButtonEdit(scope)"
+              ghost
+              >编辑</Button
+            >
+            <Button
+              type="info"
+              size="small"
+              @click="endWithButtonEdit(scope)"
+              ghost
+              >完成</Button
+            >
           </template>
         </el-table-column>
       </el-table>
@@ -262,6 +362,10 @@ export default {
       type: Boolean, //是否双击启用编辑功能
       default: true,
     },
+    clickEdit: {
+      type: Boolean, //是否点击行编辑，再次点击行时结束编辑(默认点击行编辑，鼠标离开结束编辑)
+      default: false,
+    },
     beginEdit: {
       //编辑开始
       type: Function,
@@ -354,8 +458,10 @@ export default {
     this.summaryData.push("合计");
     this.columns.forEach((x, _index) => {
       if (!x.hidden) {
-        this.summaryIndex[x.field] = _index;
+        //this.summaryIndex[x.field] = _index;
+        //2020.10.11修复求和列错位的问题
         this.summaryData.push("");
+        this.summaryIndex[x.field] = this.summaryData.length;
       }
       //求和
       if (x.summary && !this.summary) {
@@ -417,9 +523,39 @@ export default {
     this.defaultLoadPage && this.load();
   },
   methods: {
-    rowClick(row, column) {
+    headerClick(column, event) {
+      if (this.clickEdit && this.edit.rowIndex != -1) {
+        if (
+          this.rowEndEdit(
+            this.url
+              ? this.rowData[this.edit.rowIndex]
+              : this.tableData[this.edit.rowIndex],
+            column
+          )
+        ) {
+          this.edit.rowIndex = -1;
+        }
+      }
+      // this.edit.rowIndex = -1;
+    },
+    rowClick(row, column, event) {
       if (!this.doubleEdit) {
         return;
+      }
+      //点击其他行时，如果点击的行与正在编辑的行相同，保持编辑状态
+      if (this.clickEdit && this.edit.rowIndex != -1) {
+        if (row.elementIdex == this.edit.rowIndex) {
+          //点击的单元格如果不可以编辑，直接结束编辑
+          if (!this.columns.some((x) => x.field == event.property && x.edit)) {
+            if (this.rowEndEdit(row, event)) {
+              this.edit.rowIndex = -1;
+            }
+          }
+          return;
+        }
+        if (this.rowEndEdit(row, event)) {
+          this.edit.rowIndex = -1;
+        }
       }
       this.rowBeginEdit(row, column);
     },
@@ -599,7 +735,8 @@ export default {
           typeof option.edit.max == "number" &&
           val > option.edit.max
         ) {
-          this.$Message.error(option.title + "不能大于" + option.edit.min);
+          //2020.09.26修复表格验证最大值取值错误的问题
+          this.$Message.error(option.title + "不能大于" + option.edit.max);
           return false;
         }
         return true;
@@ -632,17 +769,20 @@ export default {
       return true;
     },
     rowEndEdit(row, column, event) {
+      if (this.clickEdit && event) {
+        return true;
+      }
       if (!this.enableEdit) {
         if (!this.errorFiled) {
           this.edit.rowIndex = -1;
         }
-        return;
+        return true;
       }
       if (!this.doubleEdit && event) {
-        return;
+        return true;
       }
       //结束编辑前
-      if (!this.endEditBefore(row, column, this.edit.rowIndex)) return;
+      if (!this.endEditBefore(row, column, this.edit.rowIndex)) return false;
 
       if (
         this.edit.rowIndex != -1 &&
@@ -655,7 +795,7 @@ export default {
           return x.field == column.property;
         });
         if (!option || !option.edit) {
-          return;
+          return true;
         }
         if (
           option.edit.type == "datetime" ||
@@ -663,7 +803,7 @@ export default {
           option.edit.type == "select"
         ) {
           if (this.edit.rowIndex == row.elementIdex) {
-            return;
+            return true;
           }
         }
         if (!this.validateColum(option, data)) {
@@ -674,11 +814,12 @@ export default {
         }
       }
       if (this.errorFiled) {
-        return;
+        return false;
       }
-      if (!this.endEditAfter(row, column, this.edit.rowIndex)) return;
+      if (!this.endEditAfter(row, column, this.edit.rowIndex)) return false;
       //  this.errorFiled = "";
       this.edit.rowIndex = -1;
+      return true;
       //this.edit.columnIndex=-1;
     },
     delRow() {
@@ -1053,10 +1194,13 @@ export default {
   border-top: 0px;
 }
 .v-table >>> .el-table__header th {
-  padding: 1.5px !important;
+  padding: 8px 0 !important;
 
   background-color: #f8f8f9 !important;
   font-size: 13px;
+}
+.v-table >>> .el-table__header th.is-sortable {
+  padding: 3px !important;
 }
 .v-table >>> .el-table__body .cell {
   word-break: inherit !important;
