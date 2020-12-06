@@ -3,7 +3,7 @@
        :class="{'small-line':smallLine,scroll:header}">
     <!-- <van-calendar v-model="showCalendar" @confirm="selectDate" /> -->
     <van-popup v-model="showCalendar"
-               position="right"
+               position="bottom"
                :style="{ height: '40%' }">
       <van-datetime-picker v-model="currentDate"
                            type="date"
@@ -115,8 +115,10 @@
                        v-else-if="item.type=='img'"
                        :label="item.name">
               <template #input>
-                <img :src="fields[item.field]"
-                     @click="base.previewImg(fields[item.field])" />
+                <vol-van-uploader :file-list="fields[item.field]"
+                                  :multiple="item.multiple"
+                                  :maxCount="item.maxCount"
+                                  :url="item.url"></vol-van-uploader>
               </template>
             </van-field>
 
@@ -212,6 +214,7 @@ export default {
     },
   },
   components: {
+    "vol-van-uploader": () => import("./VolVanUploader"),
     // "ds-header": header,
     "van-field": Field,
     "van-popup": Popup,
@@ -300,6 +303,9 @@ export default {
     },
     actionSelect (action, index, isBtnClick) {
       if (isBtnClick) {
+        //自定义处理选择事件
+        this.currentOptions.onChange &&
+          this.currentOptions.onChange(this.fields[this.currentOptions.field], action, this.dicInfo);
         this.currentSelector = false;
         return;
       }

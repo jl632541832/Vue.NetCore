@@ -18,6 +18,7 @@ const router = new Router({
         keepAlive: true
       },
       children: [
+        ...doc,
         {
           path: '/index',
           name: 'index',
@@ -68,7 +69,6 @@ const router = new Router({
       meta: {
       }
     },
-    ...doc,
     {
       path: '/stat',
       name: 'stat',
@@ -88,6 +88,21 @@ const router = new Router({
       path: '/app_transactionAvgPrice',
       name: 'app_transactionAvgPrice',
       component: () => import('@/views/page/app_transactionAvgPrice.vue'),
+      meta: {
+      }
+    },
+    {
+      path: '/App_Expert',
+      name: 'App_Expert',
+      component: () => import('@/views/page/App_Expert.vue'),
+      meta: {
+      }
+    }
+    ,
+    {
+      path: '/test',
+      name: 'test',
+      component: () => import('@/views/test/Test.vue'),
       meta: {
       }
     }
