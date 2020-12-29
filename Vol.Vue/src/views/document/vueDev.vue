@@ -66,8 +66,24 @@
                  style="line-height: 1.7;"
                  class="desc"
                  v-html="line"></p>
+              <Button type="info"
+                      v-if="item.buttonClick"
+                      @click="item.buttonClick">查看</Button>
             </div>
+            <template v-if="item.drawer">
+              <Drawer v-model="doc_model"
+                      :width="900">
+
+                <img style="width:100%"
+                     v-for="(img,i) in item.img"
+                     :key="i"
+                     :src="img"
+                     @click="()=>{base.previewImg((img||'').replace('?imageMogr2/thumbnail/!50p',''))}" />
+                <br>
+              </Drawer>
+            </template>
             <div class="img"
+                 v-else
                  :class="{'full-code':!item.img}">
               <template v-if="(item.img instanceof Array)">
                 <img v-for="(img,i) in item.img"
@@ -78,9 +94,12 @@
               <img v-else
                    :src="item.img"
                    @click="()=>{base.previewImg((item.img||'').replace('?imageMogr2/thumbnail/!50p',''))}" />
+
             </div>
+
           </div>
           <Alert type="success"
+                 v-if="item.tips"
                  show-icon>{{item.tips}}</Alert>
         </div>
       </div>
@@ -101,6 +120,7 @@ export default {
   },
   data () {
     return {
+      doc_model: false,
       active: 0,
       items: [
         {
@@ -110,6 +130,45 @@ export default {
           ],
           tips: ` 前端功能扩展覆盖了常用操作，可通过扩展实现任意功能`,
           img: "",
+        },
+        {
+          title: "自定义按钮权限控制",
+          content: [
+            `<p>1、菜单上点击[其他权限]</p>
+            <p>2、分配按钮权限</p>
+            <p>3、在buttons.js中添加按钮配置</p>`,
+          ],
+          buttonClick: () => {
+            this.doc_model = true;
+          },
+          tips: ` `,
+          drawer: true,
+          img: ["https://doc-vue-1256993465.cos.ap-chengdu.myqcloud.com/20201213btn01.jpg?imageMogr2/thumbnail/!50p",
+            "https://doc-vue-1256993465.cos.ap-chengdu.myqcloud.com/20201213btn02.jpg?imageMogr2/thumbnail/!50p",
+            "https://doc-vue-1256993465.cos.ap-chengdu.myqcloud.com/20201213btn03.jpg?imageMogr2/thumbnail/!50p",
+            "https://doc-vue-1256993465.cos.ap-chengdu.myqcloud.com/20201213btn04.jpg?imageMogr2/thumbnail/!50p",]
+        },
+        {
+          title: "禁用页面缓存keepAlive",
+          content: [`所有页面默认开启了缓存，即所有页面只会执行一次created与onInit<br />
+<br />
+解决方法1：在router文件夹下找到路由配置里加上:&nbsp; (具体见router-&gt;form.js中的/kindEditor配置)<br />
+&nbsp; &nbsp;meta: {<br />
+&nbsp; &nbsp; &nbsp; keepAlive: false<br />
+&nbsp; &nbsp;}&nbsp;<br />
+<br />
+解决方法2：如果需要每次进入页面查询数据，在[表名.js]文件中添加:<br />
+&nbsp; &nbsp;onActivated(){<br />
+&nbsp; &nbsp;}<br />
+&nbsp;<br />`],
+          tips: "",
+          img: ""
+        },
+        {
+          title: "前端断点调试",
+          content: [`见右边截图`],
+          tips: "",
+          img: "https://doc-vue-1256993465.cos.ap-chengdu.myqcloud.com/2020121302.png?imageMogr2/thumbnail/!50p"
         },
         {
           title: "查询界面动态添加按钮",
@@ -1607,6 +1666,95 @@ export default {
             "https://doc-vue-1256993465.cos.ap-chengdu.myqcloud.com/17.png?imageMogr2/thumbnail/!50p",
         },
         {
+          title: "render渲染form对象1-1",
+          content: [`<div style="color:#D4D4D4;background-color:#1E1E1E;font-family:Consolas, &quot;font-size:14px;line-height:19px;white-space:pre;">
+	<div>
+		&nbsp;<span style="color:#dcdcaa;">onInit</span>&nbsp;()&nbsp;{
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6a9955;">//将编辑表单第一行第一列【名称】字段添加一个额外提示属性</span>
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6a9955;">//需要2020.12.27更新volform组件后才能使用</span>
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#569cd6;">this</span>.<span style="color:#9cdcfe;">editFormOptions</span>[<span style="color:#b5cea8;">0</span>][<span style="color:#b5cea8;">0</span>].<span style="color:#9cdcfe;">extra</span>&nbsp;=&nbsp;{
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#dcdcaa;">render</span><span style="color:#9cdcfe;">:</span>&nbsp;<span style="color:#9cdcfe;">h</span>&nbsp;<span style="color:#569cd6;">=&gt;</span>&nbsp;{
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#c586c0;">return</span>&nbsp;<span style="color:#dcdcaa;">h</span>(
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#ce9178;">"div"</span>,
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9cdcfe;">props</span><span style="color:#9cdcfe;">:</span>&nbsp;{},&nbsp;<span style="color:#9cdcfe;">style</span><span style="color:#9cdcfe;">:</span>&nbsp;{&nbsp;<span style="color:#9cdcfe;">color</span><span style="color:#9cdcfe;">:</span>&nbsp;<span style="color:#ce9178;">"#03A9F4"</span>,&nbsp;<span style="color:#9cdcfe;">cursor</span><span style="color:#9cdcfe;">:</span>&nbsp;<span style="color:#ce9178;">"pointer"</span>&nbsp;},
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9cdcfe;">on</span><span style="color:#9cdcfe;">:</span>&nbsp;{&nbsp;<span style="color:#dcdcaa;">click</span><span style="color:#9cdcfe;">:</span>&nbsp;()&nbsp;<span style="color:#569cd6;">=&gt;</span>&nbsp;{&nbsp;<span style="color:#569cd6;">this</span>.<span style="color:#9cdcfe;">$Message</span>.<span style="color:#dcdcaa;">info</span>(<span style="color:#ce9178;">"点击事件"</span>)&nbsp;}&nbsp;}
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;},
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#dcdcaa;">h</span>(
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#ce9178;">"Tooltip"</span>,
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9cdcfe;">props</span><span style="color:#9cdcfe;">:</span>&nbsp;{&nbsp;<span style="color:#9cdcfe;">content</span><span style="color:#9cdcfe;">:</span>&nbsp;<span style="color:#ce9178;">"这里是提示的内容"</span>,&nbsp;<span style="color:#9cdcfe;">placement</span><span style="color:#9cdcfe;">:</span>&nbsp;<span style="color:#ce9178;">"right-start"</span>&nbsp;},
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9cdcfe;">class</span><span style="color:#9cdcfe;">:</span>&nbsp;<span style="color:#ce9178;">"ivu-icon&nbsp;ivu-icon-ios-alert-outline"</span>,
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9cdcfe;">style</span><span style="color:#9cdcfe;">:</span>&nbsp;{}
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;},&nbsp;[
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#dcdcaa;">h</span>(<span style="color:#ce9178;">"span"</span>,&nbsp;{},&nbsp;[<span style="color:#ce9178;">"提示信息"</span>])
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;);
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;}
+	</div>
+</div>`],
+          tips: `render操作form组件，可以在表单中添加任意组件，包括chart图表，具体render参数见vue官方文档`,
+          img:
+            "https://doc-vue-1256993465.cos.ap-chengdu.myqcloud.com/2020122701.png?imageMogr2/thumbnail/!50p",
+        },
+        {
           title: "render渲染form对象2",
           content: [
             `<div style="color:#D4D4D4;background-color:#1E1E1E;font-family:Consolas, &quot;font-size:14px;line-height:1.2;white-space:pre;">
@@ -2223,6 +2371,56 @@ export default {
             "https://doc-vue-1256993465.cos.ap-chengdu.myqcloud.com/42.png?imageMogr2/thumbnail/!50p",
         },
         {
+          title: "table自定义显示图片及base64格式",
+          content: [`<div style="color:red;">2020.12.19更新basic组件才能使用</div><div style="color:#D4D4D4;background-color:#1E1E1E;font-family:Consolas, &quot;font-size:14px;line-height:19px;white-space:pre;">
+	<div>
+		&nbsp;&nbsp;<span style="color:#dcdcaa;">onInit</span>(){
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#569cd6;">this</span>.<span style="color:#9cdcfe;">columns</span>.<span style="color:#dcdcaa;">forEach</span>(<span style="color:#9cdcfe;">item</span><span style="color:#569cd6;">=&gt;</span>{
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#c586c0;">if</span>(<span style="color:#9cdcfe;">item</span>.<span style="color:#9cdcfe;">field</span>==<span style="color:#ce9178;">"xxx"</span>){
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6a9955;">//1.通过formatter自定返回图片</span>
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6a9955;">//&nbsp;var&nbsp;_imgs=[];</span>
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6a9955;">//&nbsp;item.formatter=(imgs)=&gt;{</span>
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6a9955;">//&nbsp;&nbsp;//&nbsp;imgs.split(",")</span>
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6a9955;">//&nbsp;&nbsp;_imgs.push({name:"文件名",path:"127.0.0.1/xxxx.jpg"})</span>
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6a9955;">//&nbsp;}</span>
+	</div>
+<br />
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6a9955;">//2.&nbsp;如果图片是base64格式的,请将属性设置为base64=true;</span>
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6a9955;">//&nbsp;&nbsp;item.base64=true;</span>
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;})
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;}
+	</div>
+</div>`], tips: ``,
+          img:
+            "",
+        },
+        {
           title: "table格式化数据",
           content: [
             `<div style="color:#D4D4D4;background-color:#1E1E1E;font-family:Consolas, &quot;font-size:14px;line-height:1.2;white-space:pre;">
@@ -2443,9 +2641,76 @@ export default {
           img: ""
         },
         {
+          title: "table单元格td背景颜色",
+          content: [`<div style="color:red">2020.12.13需要更新前端voltable组件</div><div style="color:#D4D4D4;background-color:#1E1E1E;font-family:Consolas, &quot;font-size:14px;line-height:19px;white-space:pre;">
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#dcdcaa;">onInit</span>&nbsp;()&nbsp;{
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6a9955;">//设置表的最大高度</span>
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6a9955;">//&nbsp;this.tableMaxHeight&nbsp;=&nbsp;300;</span>
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#569cd6;">this</span>.<span style="color:#9cdcfe;">columns</span>.<span style="color:#dcdcaa;">forEach</span>(<span style="color:#9cdcfe;">x</span>&nbsp;<span style="color:#569cd6;">=&gt;</span>&nbsp;{
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#c586c0;">if</span>&nbsp;(<span style="color:#9cdcfe;">x</span>.<span style="color:#9cdcfe;">field</span>&nbsp;==&nbsp;<span style="color:#ce9178;">"PhoneNo"</span>)&nbsp;{
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9cdcfe;">x</span>.<span style="color:#dcdcaa;">cellStyle</span>&nbsp;=&nbsp;(<span style="color:#9cdcfe;">row</span>,&nbsp;<span style="color:#9cdcfe;">rowIndex</span>,&nbsp;<span style="color:#9cdcfe;">columnIndex</span>)&nbsp;<span style="color:#569cd6;">=&gt;</span>&nbsp;{
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#c586c0;">if</span>&nbsp;(<span style="color:#9cdcfe;">row</span>.<span style="color:#9cdcfe;">PhoneNo</span>&nbsp;==&nbsp;<span style="color:#ce9178;">"138888887698"</span>)&nbsp;{
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#c586c0;">return</span>&nbsp;{&nbsp;<span style="color:#9cdcfe;">background</span><span style="color:#9cdcfe;">:</span>&nbsp;<span style="color:#ce9178;">"#2196F3"</span>,&nbsp;<span style="color:#9cdcfe;">color</span><span style="color:#9cdcfe;">:</span>&nbsp;<span style="color:#ce9178;">"#ffff"</span>&nbsp;}
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#c586c0;">if</span>&nbsp;(<span style="color:#9cdcfe;">x</span>.<span style="color:#9cdcfe;">field</span>&nbsp;==&nbsp;<span style="color:#ce9178;">"Creator"</span>)&nbsp;{
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9cdcfe;">x</span>.<span style="color:#dcdcaa;">cellStyle</span>&nbsp;=&nbsp;(<span style="color:#9cdcfe;">row</span>,&nbsp;<span style="color:#9cdcfe;">rowIndex</span>,&nbsp;<span style="color:#9cdcfe;">columnIndex</span>)&nbsp;<span style="color:#569cd6;">=&gt;</span>&nbsp;{
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#c586c0;">if</span>&nbsp;(<span style="color:#9cdcfe;">row</span>.<span style="color:#9cdcfe;">Creator</span>&nbsp;==&nbsp;<span style="color:#ce9178;">"超级管理员"</span>)&nbsp;{
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#c586c0;">return</span>&nbsp;{&nbsp;<span style="color:#9cdcfe;">background</span><span style="color:#9cdcfe;">:</span>&nbsp;<span style="color:#ce9178;">"#f3f3f3"</span>&nbsp;}
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;})
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;}
+	</div>
+</div>`],
+          tips: "",
+          img: "https://doc-vue-1256993465.cos.ap-chengdu.myqcloud.com/2020121301.png?imageMogr2/thumbnail/!50p"
+        },
+        {
           title: "table设置/移除列颜色",
           content: [
-            `<div style="color:#D4D4D4;background-color:#1E1E1E;font-family:Consolas, &quot;font-size:14px;line-height:19px;white-space:pre;">
+            `<div style="color:red">2020.09.06需要更新前端voltable组件(与上面设置颜色的区别，此处操作是对于有数据源的操作，上面的是对于整个td设置背景颜色)</div><div style="color:#D4D4D4;background-color:#1E1E1E;font-family:Consolas, &quot;font-size:14px;line-height:19px;white-space:pre;">
 	<div>
 		&nbsp;<span style="color:#dcdcaa;">onInit</span>()&nbsp;{
 	</div>
@@ -3468,51 +3733,57 @@ export default {
         {
           title: "编辑表单添加额外属性",
           content: [
-            `<div style="color:#D4D4D4;background-color:#1E1E1E;font-family:Consolas, &quot;font-size:14px;line-height:1.2;white-space:pre;">
+            `<div style="color:#D4D4D4;background-color:#1E1E1E;font-family:Consolas, &quot;font-size:14px;line-height:19px;white-space:pre;">
 	<div>
-		&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#dcdcaa;">onInit</span>()&nbsp;{
+		&nbsp;<span style="color:#dcdcaa;">onInit</span>()&nbsp;{
 	</div>
 	<div>
-		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#569cd6;">let</span>&nbsp;<span style="color:#9cdcfe;">$this</span>=<span style="color:#569cd6;">this</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#569cd6;">let</span>&nbsp;<span style="color:#9cdcfe;">$this</span>=<span style="color:#569cd6;">this</span>;
 	</div>
 	<div>
-		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#569cd6;">this</span>.<span style="color:#9cdcfe;">boxOptions</span>.<span style="color:#9cdcfe;">height</span>&nbsp;=&nbsp;<span style="color:#9cdcfe;">document</span>.<span style="color:#9cdcfe;">documentElement</span>.<span style="color:#9cdcfe;">clientHeight</span>&nbsp;*&nbsp;<span style="color:#b5cea8;">0.6</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#569cd6;">this</span>.<span style="color:#9cdcfe;">boxOptions</span>.<span style="color:#9cdcfe;">height</span>&nbsp;=&nbsp;<span style="color:#9cdcfe;">document</span>.<span style="color:#4fc1ff;">documentElement</span>.<span style="color:#4fc1ff;">clientHeight</span>&nbsp;*&nbsp;<span style="color:#b5cea8;">0.6</span>;
 	</div>
 	<div>
-		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#569cd6;">this</span>.<span style="color:#9cdcfe;">editFormOptions</span>.<span style="color:#dcdcaa;">forEach</span>(<span style="color:#9cdcfe;">x</span>&nbsp;<span style="color:#569cd6;">=&gt;</span>&nbsp;{
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#569cd6;">this</span>.<span style="color:#9cdcfe;">editFormOptions</span>.<span style="color:#dcdcaa;">forEach</span>(<span style="color:#9cdcfe;">x</span>&nbsp;<span style="color:#569cd6;">=&gt;</span>&nbsp;{
 	</div>
 	<div>
-		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9cdcfe;">x</span>.<span style="color:#dcdcaa;">forEach</span>(<span style="color:#9cdcfe;">item</span>&nbsp;<span style="color:#569cd6;">=&gt;</span>&nbsp;{
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9cdcfe;">x</span>.<span style="color:#dcdcaa;">forEach</span>(<span style="color:#9cdcfe;">item</span>&nbsp;<span style="color:#569cd6;">=&gt;</span>&nbsp;{
 	</div>
 	<div>
-		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#c586c0;">if</span>&nbsp;(<span style="color:#9cdcfe;">item</span>.<span style="color:#9cdcfe;">field</span>&nbsp;==&nbsp;<span style="color:#ce9178;">'ExpertName'</span>)&nbsp;{
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#c586c0;">if</span>&nbsp;(<span style="color:#9cdcfe;">item</span>.<span style="color:#9cdcfe;">field</span>&nbsp;==&nbsp;<span style="color:#ce9178;">'ExpertName'</span>)&nbsp;{
 	</div>
 	<div>
-		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6a9955;">//editFormOptions更多配置见volform组件api</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6a9955;">//editFormOptions更多配置见volform组件api</span>
 	</div>
 	<div>
-		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9cdcfe;">item</span>.<span style="color:#9cdcfe;">extra</span>&nbsp;=&nbsp;{
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9cdcfe;">item</span>.<span style="color:#9cdcfe;">extra</span>&nbsp;=&nbsp;{
 	</div>
 	<div>
-		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9cdcfe;">icon</span><span style="color:#9cdcfe;">:</span>&nbsp;<span style="color:#ce9178;">"ios-search"</span>,&nbsp;<span style="color:#6a9955;">//显示图标</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9cdcfe;">icon</span><span style="color:#9cdcfe;">:</span>&nbsp;<span style="color:#ce9178;">"ios-search"</span>,&nbsp;<span style="color:#6a9955;">//显示图标</span>
 	</div>
 	<div>
-		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9cdcfe;">text</span><span style="color:#9cdcfe;">:</span>&nbsp;<span style="color:#ce9178;">"点击可触发事件"</span>,<span style="color:#6a9955;">//显示文本</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9cdcfe;">text</span><span style="color:#9cdcfe;">:</span>&nbsp;<span style="color:#ce9178;">"点击可触发事件"</span>,<span style="color:#6a9955;">//显示文本</span>
 	</div>
 	<div>
-		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#dcdcaa;">click</span><span style="color:#9cdcfe;">:</span>&nbsp;<span style="color:#9cdcfe;">item</span>&nbsp;<span style="color:#569cd6;">=&gt;</span>&nbsp;{<span style="color:#6a9955;">//触发事件</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9cdcfe;">style</span><span style="color:#9cdcfe;">:</span>&nbsp;<span style="color:#ce9178;">"color:red;"</span>,<span style="color:#6a9955;">//指定样式</span>
 	</div>
 	<div>
-		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9cdcfe;">$this</span>.<span style="color:#9cdcfe;">$Message</span>.<span style="color:#dcdcaa;">info</span>(<span style="color:#ce9178;">"额外点击事件"</span>)
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#dcdcaa;">click</span><span style="color:#9cdcfe;">:</span>&nbsp;<span style="color:#9cdcfe;">item</span>&nbsp;<span style="color:#569cd6;">=&gt;</span>&nbsp;{<span style="color:#6a9955;">//触发事件</span>
 	</div>
 	<div>
-		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6a9955;">//在此处可做其他操作，如：弹出框(自己新建一个vue页面，然后点击此处，弹出页面)</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9cdcfe;">$this</span>.<span style="color:#9cdcfe;">$Message</span>.<span style="color:#dcdcaa;">info</span>(<span style="color:#ce9178;">"额外点击事件"</span>)
 	</div>
 	<div>
-		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6a9955;">//$this.$refs.gridHeader.model&nbsp;=&nbsp;true;</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6a9955;">//在此处可做其他操作，如：弹出框(自己新建一个vue页面，然后点击此处，弹出页面)</span>
 	</div>
 	<div>
-		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6a9955;">//具体实现参照上面[点击按钮弹出框],实现方式一样</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6a9955;">//$this.$refs.gridHeader.model&nbsp;=&nbsp;true;</span>
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6a9955;">//具体实现参照上面[点击按钮弹出框],实现方式一样</span>
+	</div>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
 	</div>
 	<div>
 		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
@@ -3521,16 +3792,13 @@ export default {
 		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
 	</div>
 	<div>
-		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;})
 	</div>
 	<div>
 		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;})
 	</div>
 	<div>
-		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;})
-	</div>
-	<div>
-		&nbsp;&nbsp;&nbsp;&nbsp;}
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
 	</div>
 </div>`,
           ],
